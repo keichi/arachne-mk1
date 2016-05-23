@@ -26,7 +26,16 @@
   deploy : {
     production : {
       user : "arachne",
-      host : ["188.166.177.39"],
+      host : [
+          "188.166.177.39",
+          "188.166.177.62",
+          "188.166.177.82",
+          "188.166.190.228",
+          "188.166.177.186",
+          "188.166.177.204",
+          "188.166.185.37",
+          "188.166.185.42"
+      ],
       ref  : "origin/master",
       repo : "git@titan.ais.cmc.osaka-u.ac.jp:keichi/arachne.git",
       path : "/home/arachne/production",
