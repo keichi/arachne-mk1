@@ -1,0 +1,36 @@
+{
+  /**
+   * Application configuration section
+   * http://pm2.keymetrics.io/docs/usage/application-declaration/
+   */
+  apps : [
+
+    // Arachne crawler
+    {
+      name      : "arachne",
+      script    : "app.js",
+      env: {
+      },
+      env_production : {
+        NODE_ENV: "production",
+        REDIS_URL: "redis://arachne:Arachne12345!@10.130.14.180",
+        MYSQL_URL: "mysql://arachne:Arachne12345!@10.130.30.226/arachne"
+      }
+    }
+  ],
+
+  /**
+   * Deployment section
+   * http://pm2.keymetrics.io/docs/usage/deployment/
+   */
+  deploy : {
+    production : {
+      user : "arachne",
+      host : ["188.166.177.39"],
+      ref  : "origin/master",
+      repo : "git@titan.ais.cmc.osaka-u.ac.jp:keichi/arachne.git",
+      path : "/home/arachne/production",
+      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env production"
+    }
+  }
+}
