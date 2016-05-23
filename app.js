@@ -131,7 +131,7 @@ var processCrawl = function (job, done) {
   var node = job.data;
   stats.meter('crawledPerSecond').mark();
 
-  if (node.port <= 0 || node.port > 65535) return done();
+  if (node.port <= 0 || node.port > 65535) return done(new Error("Invalid port"));
   socket.query(node, {
     q: 'find_node',
     a: {
@@ -139,7 +139,7 @@ var processCrawl = function (job, done) {
       target: randomID()
     }
   }, function (err, response) {
-    if (err) return done();
+    if (err) return done(err);
 
     var nodes = response.r.nodes;
     if (!nodes) return done();
@@ -150,6 +150,7 @@ var processCrawl = function (job, done) {
         if (result) return cb();
 
         queue.inactiveCount(function(err, total) {
+          if (err) return cb(err);
           if (total > 10000) return cb();
 
           async.parallel([function (cb) {
@@ -176,7 +177,20 @@ kue.app.listen(3000);
 sequelize.sync();
 join();
 
-queue.process('crawl', 20, processCrawl);
+queue.process('crawl', 50, function (job, done) {
+  var domain = require('domain').create();
+  domain.on('error', function (err){
+    done(err);
+  });
+  domain.run(function () {
+    processCrawl(job, done);
+  });
+});
+
+queue.on('error', function (err) {
+  console.log('Oops... ', err);
+});
+
 setInterval(function () {
   console.log(stats.toJSON());
 }, 5000);
