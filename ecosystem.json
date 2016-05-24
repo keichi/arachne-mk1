@@ -16,7 +16,8 @@
         REDIS_URL: "redis://arachne:Arachne12345!@10.130.14.180",
         MYSQL_URL: "mysql://arachne:Arachne12345!@10.130.30.226/arachne"
       },
-      kill_timeout  :   5000
+      kill_timeout  :   5000,
+      node_args :   "--max-old-space-size=256"
     }
   ],
 
@@ -40,7 +41,7 @@
       ref  : "origin/master",
       repo : "git@titan.ais.cmc.osaka-u.ac.jp:keichi/arachne.git",
       path : "/home/arachne/production",
-      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env production --node-args=\"--max-old-space-size=256\""
+      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env production"
     }
   }
 }
