@@ -7,7 +7,7 @@ var Sequelize = require('sequelize');
 var geoip = require('geoip-lite');
 
 var redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-var queue = kue.createQueue({ redis: redisUrl });
+var queue = kue.createQueue({ redis: redisUrl, jobEvents: false });
 
 var mysqlUrl = process.env.MYSQL_URL || 'mysql://arachne:Arachne12345!@127.0.0.1/arachne';
 var sequelize = new Sequelize(mysqlUrl, {
@@ -188,7 +188,17 @@ queue.process('crawl', 50, function (job, done) {
 });
 
 queue.on('error', function (err) {
-  console.log('Oops... ', err);
+  console.error('Oops:', err.message);
+});
+
+queue.on('job failed', function (id, result) {
+  kue.Job.get(id, function (err, job) {
+    if (err) return;
+    job.remove(function (err) {
+      if (err) return;
+      console.log('Removed failed job:', job.id);
+    });
+  });
 });
 
 setInterval(function () {
