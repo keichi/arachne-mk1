@@ -104,7 +104,11 @@ var shutdown = function (sig) {
 var storeNode = function (node, done) {
   var ip = node.host;
 
+  stats.counter('dnsQueries').inc();
+
   dns.reverse(ip, function (err, hostnames) {
+    stats.counter('dnsQueries').dec();
+
     var geo = geoip.lookup(ip);
     var country = geo ? (geo.country ? geo.country : null) : null;
     var city = geo ? (geo.city ? geo.city : null) : null;
@@ -130,6 +134,7 @@ var storeNode = function (node, done) {
 var processCrawl = function (job, done) {
   var node = job.data;
   stats.meter('crawledPerSecond').mark();
+  stats.counter('krpcQueries').inc();
 
   if (node.port <= 0 || node.port > 65535) return done(new Error("Invalid port"));
   socket.query(node, {
@@ -139,6 +144,7 @@ var processCrawl = function (job, done) {
       target: randomID()
     }
   }, function (err, response) {
+    stats.counter('krpcQueries').dec();
     if (err) return done(err);
 
     var nodes = response.r.nodes;
@@ -146,7 +152,10 @@ var processCrawl = function (job, done) {
 
     async.each(decodeNodes(nodes), function(node, cb) {
       stats.meter('discoveredNodePerSecond').mark();
+
+      stats.counter('findNodeQueries').inc();
       Node.findOne({where: {ip: node.host}}).then(function(result) {
+        stats.counter('findNodeQueries').dec();
         if (result) return cb();
 
         async.parallel([function (cb) {
@@ -161,6 +170,7 @@ var processCrawl = function (job, done) {
           });
         }], cb);
       }, function (err) {
+        stats.counter('findNodeQueries').dec();
         return cb(err);
       });
     }, done);
@@ -171,6 +181,10 @@ process.once('SIGINT', shutdown);
 process.once('SIGTERM', shutdown);
 
 var stats = require('measured').createCollection();
+stats.gauge('usedMemory', function () {
+  return process.memoryUsage().rss;
+});
+
 var socket = rpc();
 
 kue.app.listen(3000);
@@ -200,5 +214,5 @@ queue.on('job failed', function (id, result) {
 
 setInterval(function () {
   console.log(stats.toJSON());
-}, 5000);
+}, 10000);
 

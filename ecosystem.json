@@ -16,7 +16,7 @@
         REDIS_URL: "redis://arachne:Arachne12345!@10.130.14.180",
         MYSQL_URL: "mysql://arachne:Arachne12345!@10.130.30.226/arachne"
       },
-      kill_timeout  :   5000,
+      kill_timeout  :   30000,
       node_args :   "--max-old-space-size=256"
     }
   ],
