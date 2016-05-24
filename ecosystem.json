@@ -40,7 +40,7 @@
       ref  : "origin/master",
       repo : "git@titan.ais.cmc.osaka-u.ac.jp:keichi/arachne.git",
       path : "/home/arachne/production",
-      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env production"
+      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env production --node-args=\"--max-old-space-size=256\""
     }
   }
 }
