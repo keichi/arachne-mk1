@@ -164,6 +164,7 @@ var processCrawl = function (job, done) {
           queue.inactiveCount(function(err, total) {
             if (err) return cb(err);
             if (total > 10000) return cb();
+            if (total < 100) join();
 
             node.title = 'Visit node at ' + node.host + ':' + node.port;
             queue.create('crawl', node).removeOnComplete(true).save(cb);
