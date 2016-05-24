@@ -112,6 +112,7 @@ var storeNode = function (node, done) {
     var longitude = geo ? (geo.ll ? geo.ll[1] : null) : null;
     var host = hostnames ? hostnames[0] : null;
 
+    stats.counter('storeNodeQueries').inc();
     Node.create({
       ip: ip,
       host: host,
@@ -119,11 +120,10 @@ var storeNode = function (node, done) {
       city: city,
       latitude: latitude,
       longitude: longitude
-    }).then(function () {
+    }).finally(function () {
+      stats.counter('storeNodeQueries').dec();
       done();
-    }, function () {
-      done();
-    })
+    });
   });
 };
 
@@ -149,17 +149,17 @@ var processCrawl = function (job, done) {
       Node.findOne({where: {ip: node.host}}).then(function(result) {
         if (result) return cb();
 
-        queue.inactiveCount(function(err, total) {
-          if (err) return cb(err);
-          if (total > 10000) return cb();
+        async.parallel([function (cb) {
+          storeNode(node, cb);
+        }, function (cb) {
+          queue.inactiveCount(function(err, total) {
+            if (err) return cb(err);
+            if (total > 10000) return cb();
 
-          async.parallel([function (cb) {
-            storeNode(node, cb);
-          }, function (cb) {
             node.title = 'Visit node at ' + node.host + ':' + node.port;
             queue.create('crawl', node).removeOnComplete(true).save(cb);
-          }], cb);
-        });
+          });
+        }], cb);
       }, function (err) {
         return cb(err);
       });
@@ -194,10 +194,7 @@ queue.on('error', function (err) {
 queue.on('job failed', function (id, result) {
   kue.Job.get(id, function (err, job) {
     if (err) return;
-    job.remove(function (err) {
-      if (err) return;
-      console.log('Removed failed job:', job.id);
-    });
+    job.remove();
   });
 });
 
