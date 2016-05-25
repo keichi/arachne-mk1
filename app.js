@@ -156,9 +156,9 @@ var processCrawl = function (job, done) {
       stats.counter('findNodeQueries').inc();
       Node.findOne({where: {ip: node.host}}).then(function(result) {
         stats.counter('findNodeQueries').dec();
-        if (result) return cb();
 
         async.parallel([function (cb) {
+          if (result) return cb();
           storeNode(node, cb);
         }, function (cb) {
           queue.inactiveCount(function(err, total) {
