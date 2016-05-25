@@ -163,8 +163,17 @@ var processCrawl = function (job, done) {
         }, function (cb) {
           queue.inactiveCount(function(err, total) {
             if (err) return cb(err);
-            if (total > 10000) return cb();
-            if (total < 100) join();
+
+            if (total > 100000) {
+              // Queue is full, don't enque
+              return cb();
+            } else if (total < 100) {
+              // Running out of jobs; let's query bootstrap nodes
+              join();
+            } else if (result) {
+              // When 100 <= total <= 1000, don't enque visited nodes
+              return cb();
+            }
 
             node.title = 'Visit node at ' + node.host + ':' + node.port;
             queue.create('crawl', node).removeOnComplete(true).save(cb);
